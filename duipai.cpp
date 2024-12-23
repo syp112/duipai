@@ -14,6 +14,7 @@ namespace color_print
 	    const int YELLOW=FOREGROUND_RED|FOREGROUND_GREEN;
 	    const int BLUE=FOREGROUND_BLUE;
 	    const int PURPLE=FOREGROUND_RED|FOREGROUND_BLUE;
+	    const int CYAN=FOREGROUND_GREEN|FOREGROUND_BLUE;
 	    const int WHITE=FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE;
 	#else
 		const int RED=1;
@@ -21,6 +22,7 @@ namespace color_print
 	    const int YELLOW=3;
 	    const int BLUE=4;
 	    const int PURPLE=5;
+	    const int CYAN=6;
 	    const int WHITE=7;
 	#endif
     void print(string s,int c)
@@ -54,14 +56,16 @@ signed main()
 	#ifdef _WIN32
 		SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOGPFAULTERRORBOX);
 	#endif
+	freopen("___TMP___","a",stderr);
 	system("del result.res");
 	if(fileExists("duipai.json"))
 	{
 		freopen("duipai.json","r",stdin);
+		print("The configuration file already exists.\n",WHITE);
 	}
 	else
 	{
-		printf("Please scan duipai.json\n");
+		print("Please scan duipai.json\n",WHITE);
 	}
 	cin>>s>>ex>>st>>ed>>checker;
 	if(!fileExists("duipai.json"))
@@ -71,6 +75,7 @@ signed main()
 	}
 	freopen("result.res","a",stdout);
 	freopen("result.res","a",stderr);
+	print("Compiling...",WHITE);
 	if(system(("g++ -o2 -std=c++14 -Wall -Wextra -o "+s+" "+s+".cpp").c_str()))
 	{
 		print("Compilation error.",YELLOW);
