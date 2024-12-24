@@ -18,6 +18,21 @@ string to_string(T1 s1,T2 ...s2)
 {
 	return to_string(s1)+to_string(s2...);
 }
+void quit(int id)
+{
+	#ifdef __WIN32
+		system(to_string("del ",s,".in").c_str());
+		system(to_string("del ",s,".ans").c_str());
+		system(to_string("del ",s,".out").c_str());
+		system("del ___TMP___");
+	#elif __linux__
+		system(to_string("rm ",s,".in").c_str());
+		system(to_string("rm ",s,".ans").c_str());
+		system(to_string("rm ",s,".out").c_str());
+		system("rm ___TMP___");
+	#endif
+	exit(id);
+}
 namespace color_print
 {
 	#ifdef _WIN32
@@ -134,7 +149,7 @@ pair<int,int> calc_test(string s)
 	if(s.empty())
 	{
 		print("Illegal test point configuration.",RED);
-		throw runtime_error("Illegal test point configuration.");
+		quit(2);
 	}
 	int p=-1;
 	for(int i=0;i<(int)s.size();i++)
@@ -144,7 +159,7 @@ pair<int,int> calc_test(string s)
 			if(~p)
 			{
 				print("Illegal test point configuration.",RED);
-				throw runtime_error("Illegal test point configuration.");
+				quit(2);
 			}
 			p=i;
 		}
@@ -163,7 +178,7 @@ vector<string> calc_part(string s)
 	if(s.empty())
 	{
 		print("Illegal test point configuration.",RED);
-		throw runtime_error("Illegal test point configuration.");
+		quit(2);
 	}
 	int p=-1;
 	for(int i=0;i<(int)s.size();i++)
@@ -173,7 +188,7 @@ vector<string> calc_part(string s)
 			if(~p)
 			{
 				print("Illegal test point configuration.",RED);
-				throw runtime_error("Illegal test point configuration.");
+				quit(2);
 			}
 			p=i;
 		}
@@ -195,7 +210,7 @@ vector<string> calc_part(string s)
 			if(l2==-1||r2==-1)
 			{
 				print("Illegal test point configuration.",RED);
-				throw runtime_error("Illegal test point configuration.");
+				quit(2);
 			}
 			for(int i=l1;i<=r1;i++)
 			{
@@ -211,7 +226,7 @@ vector<string> calc_part(string s)
 		if(p==0||p==(int)s.size()-1)
 		{
 			print("Illegal test point configuration.",RED);
-			throw runtime_error("Illegal test point configuration.");
+			quit(2);
 		}
 		r.push_back(s);
 	}
@@ -227,7 +242,7 @@ vector<string> calc_list(string s)
 			if(!isdigit(s[j])&&s[j]!='-'&&s[j]!='~')
 			{
 				print("Illegal test point configuration.",RED);
-				throw runtime_error("Illegal test point configuration.");
+				quit(2);
 			}
 		}
 		vector<string>t=calc_part(s.substr(i,j-i));
@@ -277,16 +292,6 @@ signed main()
 		string t=s+x;
 		judge(t,to_string("Running on Task : ",t));
 	}
-	#ifdef __WIN32
-		system(to_string("del ",s,".in").c_str());
-		system(to_string("del ",s,".ans").c_str());
-		system(to_string("del ",s,".out").c_str());
-		system("del ___TMP___");
-	#elif __linux__
-		system(to_string("rm ",s,".in").c_str());
-		system(to_string("rm ",s,".ans").c_str());
-		system(to_string("rm ",s,".out").c_str());
-		system("rm ___TMP___");
-	#endif
+	quit(0);
 	return 0;
 }
