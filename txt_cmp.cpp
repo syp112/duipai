@@ -38,10 +38,18 @@ bool compareFiles(const string &file1,const string &file2)
 		}
 		for(size_t i=0;i<lines1.size();++i)
 		{
-			if(lines1[i]!=lines2[i])
+			if(lines1[i].size()!=lines2[i].size())
 			{
-				printf("Wrong on line %d :\nans:%s\nout:%s\n",(int)i+1,lines1[i].c_str(),lines2[i].c_str());
+				printf("Wrong on line %d : different lengths.\n",(int)i+1);
 				return 0;
+			}
+			for(size_t j=0;j<lines1[i].size();j++)
+			{
+				if(lines1[i][j]!=lines2[i][j])
+				{
+					printf("Wrong on line %d column %d : ans %c but found %c.\n",(int)i+1,(int)j+1,lines1[i][j],lines2[i][j]);
+					return 0;
+				}
 			}
 		}
 		return 1;
