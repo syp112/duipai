@@ -63,12 +63,12 @@ int main(int argc,char*argv[])
 	string file2=argv[2];
 	if(compareFiles(file1,file2))
 	{
-		printf("Accepted.\n\n");
+		//printf("Accepted.\n\n");
 		return 0;
 	}
 	else
 	{
-		printf("Wrong answer.\n\n");
+		//printf("Wrong answer.\n\n");
 		return 1;
 	}
 	return -1;
