@@ -3,6 +3,7 @@
 	#include <windows.h>
 #endif
 using namespace std;
+int time_lim,memory_lim;
 bool OK=1;
 string s,ex,checker,test_list;
 vector<string>test_pt;
@@ -98,13 +99,13 @@ namespace judgement
 	double start;
 	void AC()
 	{
-		printf("RUNTIME : %.3lfs\n\n",time()-start);
+		printf("Accepted.\nRUNTIME : %.3lfs\n\n",time()-start-0.04);
 		print("Accepted.\n",GREEN);
 		return;
 	}
 	void WA()
 	{
-		printf("RUNTIME : %.3lfs\n\n",time()-start);
+		printf("Wrong Answer.\nRUNTIME : %.3lfs\n\n",time()-start-0.04);
 		print("Wrong Answer.\n",RED);
 		OK=0;
 		return;
@@ -116,7 +117,161 @@ namespace judgement
 		OK=0;
 		return;
 	}
-	void judge(string t,string inform)
+	void TLE()
+	{
+		printf("Time Limit Excceed.\n\n");
+		print("Time Limit Excceed.\n",BLUE);
+		OK=0;
+		return;
+	}
+	struct ProcessResult
+	{
+		bool is_timeout;
+		int exit_code;
+	};
+	void run_external_program(const string&program,int timeout_ms,int memory_lim_mb,promise<ProcessResult>&promise)
+	{
+		ProcessResult result= {false,-1};
+	#ifdef _WIN32
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+		JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli={};
+		HANDLE hJob=CreateJobObject(NULL,NULL);
+		if(!hJob)
+		{
+			throw runtime_error("CreateJobObject failed.");
+		}
+		ZeroMemory(&si,sizeof(si));
+		si.cb=sizeof(si);
+		ZeroMemory(&pi,sizeof(pi));
+		SIZE_T max_memory_bytes=static_cast<SIZE_T>(memory_lim_mb)*1024*1024;
+		jeli.BasicLimitInformation.LimitFlags=JOB_OBJECT_LIMIT_PROCESS_MEMORY;
+		jeli.ProcessMemoryLimit=max_memory_bytes;
+		if(!SetInformationJobObject(hJob,JobObjectExtendedLimitInformation,&jeli,sizeof(jeli)))
+		{
+			CloseHandle(hJob);
+			throw runtime_error("SetInformationJobObject failed");
+		}
+		if(!CreateProcess(NULL,const_cast<char*>(program.c_str()),NULL,NULL,FALSE,CREATE_SUSPENDED,NULL,NULL,&si,&pi))
+		{
+			CloseHandle(hJob);
+			throw runtime_error("CreateProcess failed");
+		}
+		if(!AssignProcessToJobObject(hJob,pi.hProcess))
+		{
+			TerminateProcess(pi.hProcess,1);
+			CloseHandle(hJob);
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+			throw runtime_error("AssignProcessToJobObject failed");
+		}
+		ResumeThread(pi.hThread);
+		DWORD waitResult=WaitForSingleObject(pi.hProcess,timeout_ms);
+		if(waitResult==WAIT_TIMEOUT)
+		{
+			TerminateProcess(pi.hProcess,1);
+			result.is_timeout=true;
+			result.exit_code=1;
+		}
+		else GetExitCodeProcess(pi.hProcess,reinterpret_cast<DWORD*>(&result.exit_code));
+		CloseHandle(hJob);
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+	#else
+		pid_t pid=fork();
+		if(pid==-1)
+		{
+			throw runtime_error("fork failed");
+		}
+		else if(pid==0)
+		{
+			struct rlimit rl;
+			rl.rlim_cur=rl.rlim_max=static_cast<rlim_t>(memory_lim_mb)*1024*1024;
+			if(setrlimit(RLIMIT_AS,&rl)!=0)
+			{
+				perror("setrlimit failed");
+				exit(EXIT_FAILURE);
+			}
+			execlp(program.c_str(),program.c_str(),(char*)nullptr);
+			exit(EXIT_FAILURE);
+		}
+		else
+		{
+			auto start=chrono::steady_clock::now();
+			while(chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now()-start).count()<timeout_ms)
+			{
+				int status;
+				pid_t result_pid=waitpid(pid,&status,WNOHANG);
+				if(result_pid==-1)
+				{
+					throw runtime_error("waitpid failed");
+				}
+				else if(result_pid>0)
+				{
+					if(WIFEXITED(status))
+					{
+						result.exit_code=WEXITSTATUS(status);
+					}
+					else if(WIFSIGNALED(status))
+					{
+						result.exit_code=WTERMSIG(status);
+					}
+					break;
+				}
+				els
+				{
+					this_thread::sleep_for(chrono::milliseconds(100));
+				}
+			}
+			if(result.exit_code==-1)
+			{
+				kill(pid,SIGTERM);
+				result.is_timeout=true;
+				result.exit_code=SIGTERM;
+				waitpid(pid,nullptr,0);
+			}
+		}
+	#endif
+		promise.set_value(result);
+		return;
+	}
+	int run_process(string t,int timeout_ms,int memory_lim_mb)
+	{
+		int re;
+		promise<ProcessResult> p;
+		future<ProcessResult> f=p.get_future();
+		thread t_run(run_external_program,t,timeout_ms,memory_lim_mb,ref(p));
+		try
+		{
+			ProcessResult result=f.get();
+			if(result.is_timeout)
+			{
+				re=2;
+			}
+			else
+			{
+				if(result.exit_code)
+				{
+					re=1;
+				}
+				else
+				{
+					re=0;
+				}
+			}
+		}
+		catch(const exception&e)
+		{
+			cerr<<e.what()<<'\n';
+			exit(1);
+		}
+		if(t_run.joinable())
+		{
+			t_run.join();
+		}
+		return re;
+	}
+	void judge(string t,string inform,int timeout_ms,int memory_lim_mb)
 	{
 		print(inform,WHITE);
 		printf(to_string(inform+"\n").c_str());
@@ -133,10 +288,11 @@ namespace judgement
 			system(to_string("copy ",t,".",ex," ",s,".ans").c_str());
 			freopen("result.res","a",stdout);
 			start=time();
-			int res=system((s+".exe").c_str());
+			int res=run_process((s+".exe").c_str(),timeout_ms,memory_lim_mb);
 			if(res==0)
 			{
 				cout<<flush;
+				freopen("result.res","a",stdout);
 				if(system(to_string(checker,".exe ",s,".ans ",s,".out").c_str()))
 				{
 					WA();
@@ -146,9 +302,13 @@ namespace judgement
 					AC();
 				}
 			}
-			else
+			else if(res==1)
 			{
 				RE();
+			}
+			else
+			{
+				TLE();
 			}
 		#elif __linux__
 			freopen("___TMP___","a",stdout);
@@ -156,10 +316,11 @@ namespace judgement
 			system(to_string("cp ",t,".",ex," ",s,".ans").c_str());
 			freopen("result.res","a",stdout);
 			double start=time();
-			int res=system((s+".exe").c_str());
+			int res=run_process((s+".exe").c_str(),timeout_ms,memory_lim_mb);
 			if(res==0)
 			{
 				cout<<flush;
+				freopen("result.res","a",stdout);
 				if(system(to_string("./",checker," ",s,".ans ",s,".out").c_str()))
 				{
 					WA();
@@ -169,9 +330,13 @@ namespace judgement
 					AC();
 				}
 			}
-			else
+			else if(res==1)
 			{
 				RE();
+			}
+			else
+			{
+				TLE();
 			}
 		#else
 			throw runtime_error("Unknown operation.");
@@ -306,11 +471,11 @@ signed main()
 	{
 		print("Please scan duipai.conf\n",WHITE);
 	}
-	cin>>s>>ex>>test_list>>checker;
+	cin>>s>>ex>>test_list>>checker>>time_lim>>memory_lim;
 	if(!fileExists("duipai.conf"))
 	{
 		freopen("duipai.conf","w",stdout);
-		printf("%s %s\n%s\n%s\n",s.c_str(),ex.c_str(),test_list.c_str(),checker.c_str());
+		printf("%s %s\n%s\n%s\n%d %d\n",s.c_str(),ex.c_str(),test_list.c_str(),checker.c_str(),time_lim,memory_lim);
 	}
 	freopen("result.res","a",stdout);
 	freopen("result.res","a",stderr);
@@ -322,11 +487,12 @@ signed main()
 		printf("Compilation error.");
 		exit(0);
 	}
-	judge(s+test_pt[0],to_string("Running on Pretest : "));
+	judge(s+test_pt[0],to_string("Running on Pretest : "),time_lim,memory_lim);
+	OK=1;
 	for(auto x:test_pt)
 	{
 		string t=s+x;
-		judge(t,to_string("Running on Task : ",t));
+		judge(t,to_string("Running on Task : ",t),time_lim,memory_lim);
 	}
 	quit(0);
 	return 0;
