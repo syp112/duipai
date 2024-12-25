@@ -54,6 +54,7 @@ bool compareFiles(const string &file1,const string &file2)
 }
 int main(int argc,char*argv[])
 {
+	freopen("result.res","a",stdout);
 	if(argc!=3)
 	{
 		cerr<<"ERROR. Enter in the following format: text_conparison <ansfile> <outfile>"<<endl;
@@ -63,12 +64,14 @@ int main(int argc,char*argv[])
 	string file2=argv[2];
 	if(compareFiles(file1,file2))
 	{
-		//printf("Accepted.\n\n");
+		printf("Accepted.\n\n");
+		cout<<flush;
 		return 0;
 	}
 	else
 	{
-		//printf("Wrong answer.\n\n");
+		printf("Wrong answer.\n\n");
+		cout<<flush;
 		return 1;
 	}
 	return -1;
