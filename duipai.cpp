@@ -3,36 +3,9 @@
 	#include <windows.h>
 #endif
 using namespace std;
+bool OK=1;
 string s,ex,checker,test_list;
 vector<string>test_pt;
-string to_string(string s)
-{
-	return s;
-}
-string to_string(const char *s)
-{
-	return (string)s;
-}
-template<typename T1,typename ...T2>
-string to_string(T1 s1,T2 ...s2)
-{
-	return to_string(s1)+to_string(s2...);
-}
-void quit(int id)
-{
-	#ifdef __WIN32
-		system(to_string("del ",s,".in").c_str());
-		system(to_string("del ",s,".ans").c_str());
-		system(to_string("del ",s,".out").c_str());
-		system("del ___TMP___");
-	#elif __linux__
-		system(to_string("rm ",s,".in").c_str());
-		system(to_string("rm ",s,".ans").c_str());
-		system(to_string("rm ",s,".out").c_str());
-		system("rm ___TMP___");
-	#endif
-	exit(id);
-}
 namespace color_print
 {
 	#ifdef _WIN32
@@ -70,6 +43,47 @@ namespace color_print
 	}
 }
 using namespace color_print;
+string to_string(string s)
+{
+	return s;
+}
+string to_string(const char *s)
+{
+	return (string)s;
+}
+template<typename T1,typename ...T2>
+string to_string(T1 s1,T2 ...s2)
+{
+	return to_string(s1)+to_string(s2...);
+}
+void quit(int id)
+{
+	if(id==0)
+	{
+		if(OK)
+		{
+			print("Accepted.",GREEN);
+			printf("Accepted.\n");
+		}
+		else
+		{
+			print("NOT accepted.",RED);
+			printf("NOT accepted.\n");
+		}
+	}
+	#ifdef __WIN32
+		system(to_string("del ",s,".in").c_str());
+		system(to_string("del ",s,".ans").c_str());
+		system(to_string("del ",s,".out").c_str());
+		system("del ___TMP___");
+	#elif __linux__
+		system(to_string("rm ",s,".in").c_str());
+		system(to_string("rm ",s,".ans").c_str());
+		system(to_string("rm ",s,".out").c_str());
+		system("rm ___TMP___");
+	#endif
+	exit(id);
+}
 double time()
 {
 	return 1.0*clock()/CLOCKS_PER_SEC;
@@ -79,71 +93,93 @@ bool fileExists(const string& filename)
     ifstream file(filename);
     return file.good();
 }
-void judge(string t,string inform)
+namespace judgement
 {
-	print(inform,WHITE);
-	printf(to_string(inform+"\n").c_str());
-	if(!fileExists(to_string(t,".in"))||!fileExists(to_string(t,".",ex)))
+	double start;
+	void AC()
 	{
-		print("File Error.\n",YELLOW);
-		printf("File Error.\n\n");
+		printf("RUNTIME : %.3lfs\n\n",time()-start);
+		print("Accepted.\n",GREEN);
 		return;
 	}
-	#ifdef _WIN32
-		freopen("___TMP___","a",stdout);
-		system(to_string("copy ",t,".in ",s,".in").c_str());
-		system(to_string("copy ",t,".",ex," ",s,".ans").c_str());
-		freopen("result.res","a",stdout);
-		double start=time();
-		int res=system((s+".exe").c_str());
-		if(res==0)
+	void WA()
+	{
+		printf("RUNTIME : %.3lfs\n\n",time()-start);
+		print("Wrong Answer.\n",RED);
+		OK=0;
+		return;
+	}
+	void RE()
+	{
+		printf("Runtime Error.\n\n");
+		print("Runtime Error.\n",PURPLE);
+		OK=0;
+		return;
+	}
+	void judge(string t,string inform)
+	{
+		print(inform,WHITE);
+		printf(to_string(inform+"\n").c_str());
+		if(!fileExists(to_string(t,".in"))||!fileExists(to_string(t,".",ex)))
 		{
-			printf("RUNTIME : %.3lfs\n",time()-start);
-			cout<<flush;
-			if(system(to_string(checker,".exe ",s,".ans ",s,".out").c_str()))
+			print("File Error.\n",YELLOW);
+			printf("File Error.\n\n");
+			OK=0;
+			return;
+		}
+		#ifdef _WIN32
+			freopen("___TMP___","a",stdout);
+			system(to_string("copy ",t,".in ",s,".in").c_str());
+			system(to_string("copy ",t,".",ex," ",s,".ans").c_str());
+			freopen("result.res","a",stdout);
+			start=time();
+			int res=system((s+".exe").c_str());
+			if(res==0)
 			{
-				print("Wrong Answer.\n",RED);
+				cout<<flush;
+				if(system(to_string(checker,".exe ",s,".ans ",s,".out").c_str()))
+				{
+					WA();
+				}
+				else
+				{
+					AC();
+				}
 			}
 			else
 			{
-				print("Accepted.\n",GREEN);
+				RE();
 			}
-		}
-		else
-		{
-			print("Runtime Error.\n",PURPLE);
-			printf("Runtime Error.\n\n");
-		}
-	#elif __linux__
-		freopen("___TMP___","a",stdout);
-		system(to_string("cp ",t,".in ",s,".in").c_str());
-		system(to_string("cp ",t,".",ex," ",s,".ans").c_str());
-		freopen("result.res","a",stdout);
-		double start=time();
-		int res=system((s+".exe").c_str());
-		if(res==0)
-		{
-			printf("RUNTIME : %.3lfs\n",time()-start);
-			cout<<flush;
-			if(system(to_string("./",checker," ",s,".ans ",s,".out").c_str()))
+		#elif __linux__
+			freopen("___TMP___","a",stdout);
+			system(to_string("cp ",t,".in ",s,".in").c_str());
+			system(to_string("cp ",t,".",ex," ",s,".ans").c_str());
+			freopen("result.res","a",stdout);
+			double start=time();
+			int res=system((s+".exe").c_str());
+			if(res==0)
 			{
-				print("Wrong Answer.\n",RED);
+				cout<<flush;
+				if(system(to_string("./",checker," ",s,".ans ",s,".out").c_str()))
+				{
+					WA();
+				}
+				else
+				{
+					AC();
+				}
 			}
 			else
 			{
-				print("Accepted.\n",GREEN);
+				RE();
 			}
-		}
-		else
-		{
-			print("Runtime Error.\n",PURPLE);
-			printf("Runtime Error.\n\n");
-		}
-	#else
-		throw runtime_error("Unknown operation.");
-	#endif
-	return;
+		#else
+			throw runtime_error("Unknown operation.");
+		#endif
+		return;
+	}
 }
+using namespace judgement;
 pair<int,int> calc_test(string s)
 {
 	if(s.empty())
@@ -255,29 +291,30 @@ vector<string> calc_list(string s)
 }
 signed main()
 {
-	print("Welcome to use syp's cross-checking.\nVisit https://www.luogu.com.cn/article/bavfmtbl to obtain the latest version.\nIf you encounter any problems, send an email to 3336088317@qq.com.\n",WHITE);
+	print("Welcome to use syp's cross-checking.\nVisit https://www.luogu.com.cn/article/bavfmtbl to obtain the latest version.\nIf you encounter any problems, send an email to 3336088317@qq.com.\n------------------------------------------------------------------------\n",WHITE);
 	#ifdef _WIN32
 		SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOGPFAULTERRORBOX);
 	#endif
 	freopen("___TMP___","a",stderr);
 	system("del result.res");
-	if(fileExists("duipai.json"))
+	if(fileExists("duipai.conf"))
 	{
-		freopen("duipai.json","r",stdin);
+		freopen("duipai.conf","r",stdin);
 		print("The configuration file already exists.\n",WHITE);
 	}
 	else
 	{
-		print("Please scan duipai.json\n",WHITE);
+		print("Please scan duipai.conf\n",WHITE);
 	}
 	cin>>s>>ex>>test_list>>checker;
-	if(!fileExists("duipai.json"))
+	if(!fileExists("duipai.conf"))
 	{
-		freopen("duipai.json","w",stdout);
+		freopen("duipai.conf","w",stdout);
 		printf("%s %s\n%s\n%s\n",s.c_str(),ex.c_str(),test_list.c_str(),checker.c_str());
 	}
 	freopen("result.res","a",stdout);
 	freopen("result.res","a",stderr);
+	test_pt=calc_list(test_list);
 	print("Compiling...",WHITE);
 	if(system(to_string("g++ -o2 -std=c++14 -Wall -Wextra -o ",s," ",s,".cpp").c_str()))
 	{
@@ -285,7 +322,6 @@ signed main()
 		printf("Compilation error.");
 		exit(0);
 	}
-	test_pt=calc_list(test_list);
 	judge(s+test_pt[0],to_string("Running on Pretest : "));
 	for(auto x:test_pt)
 	{
