@@ -99,13 +99,13 @@ namespace judgement
 	double start;
 	void AC()
 	{
-		printf("Accepted.\nRUNTIME : %.3lfs\n\n",time()-start-0.04);
+		printf("RUNTIME : %.3lfs\n\n",time()-start);
 		print("Accepted.\n",GREEN);
 		return;
 	}
 	void WA()
 	{
-		printf("Wrong Answer.\nRUNTIME : %.3lfs\n\n",time()-start-0.04);
+		printf("RUNTIME : %.3lfs\n\n",time()-start);
 		print("Wrong Answer.\n",RED);
 		OK=0;
 		return;
