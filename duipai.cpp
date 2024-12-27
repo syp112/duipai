@@ -293,7 +293,7 @@ namespace judgement
 			{
 				cout<<flush;
 				freopen("result.res","a",stdout);
-				if(system(to_string(checker,".exe ",s,".ans ",s,".out").c_str()))
+				if(system(to_string(checker,".exe ",s,".in ",s,".ans ",s,".out").c_str()))
 				{
 					WA();
 				}
@@ -321,7 +321,7 @@ namespace judgement
 			{
 				cout<<flush;
 				freopen("result.res","a",stdout);
-				if(system(to_string("./",checker," ",s,".ans ",s,".out").c_str()))
+				if(system(to_string("./",checker," ",s,".in ",s,".ans ",s,".out").c_str()))
 				{
 					WA();
 				}
