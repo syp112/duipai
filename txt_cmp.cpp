@@ -63,13 +63,13 @@ bool compareFiles(const string &file1,const string &file2)
 int main(int argc,char*argv[])
 {
 	freopen("result.res","a",stdout);
-	if(argc!=3)
+	if(argc!=4)
 	{
-		cerr<<"ERROR. Enter in the following format: text_conparison <ansfile> <outfile>"<<endl;
+		cerr<<"ERROR. Enter in the following format: text_conparison <infile> <ansfile> <outfile>"<<endl;
 		return 1;
 	}
-	string file1=argv[1];
-	string file2=argv[2];
+	string file1=argv[2];
+	string file2=argv[3];
 	if(compareFiles(file1,file2))
 	{
 		printf("Accepted.\n\n");
